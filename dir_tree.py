@@ -31,15 +31,27 @@ def format_size_dynamic(size_in_bytes):
         size /= 1024.0
 
 def list_directory_with_sizes(target_path):
-    """ターゲットパス直下のファイル・フォルダをリストアップし、サイズとともに返す"""
+    """ターゲットパス直下のファイル・フォルダをリストアップし、サイズとともに返す
+    ファイルを指定された場合も正常に処理する"""
     # 1行目：最後の名前だけ
     base_name = os.path.basename(os.path.normpath(target_path))
     output_lines = [f"# {base_name}"]
+
+    # ファイルが指定された場合はそのままサイズを返す
+    if os.path.isfile(target_path):
+        size_bytes = os.path.getsize(target_path)
+        size_formatted = format_size_dynamic(size_bytes)
+        output_lines.append(f"- {base_name}")
+        output_lines.append(f"    - {size_formatted}")
+        return output_lines
 
     try:
         entries = os.listdir(target_path)
     except FileNotFoundError:
         print(f"Error: Path not found: {target_path}")
+        sys.exit(1)
+    except NotADirectoryError:
+        print(f"Error: Not a directory: {target_path}")
         sys.exit(1)
     entries.sort()
 
@@ -49,7 +61,7 @@ def list_directory_with_sizes(target_path):
         size_formatted = format_size_dynamic(size_bytes)
         output_lines.append(f"- {entry}")
         output_lines.append(f"    - {size_formatted}")
-    
+
     return output_lines
 
 def get_input_path():
